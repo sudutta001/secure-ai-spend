@@ -54,7 +54,7 @@ export function downloadContractPdf(contract: PurchaseContract) {
   doc.setFontSize(9);
   doc.setTextColor(MUTED);
   doc.text(
-    `${contract.verificationId ?? "unverified"}  ·  ${
+    `${contract.verificationId ?? "unverified"}  -  ${
       contract.verifiedAt ? new Date(contract.verifiedAt).toLocaleString() : new Date().toLocaleString()
     }`,
     M + 20,
@@ -83,7 +83,7 @@ export function downloadContractPdf(contract: PurchaseContract) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
     doc.setTextColor(INK);
-    const lines = doc.splitTextToSize(body, maxW);
+    const lines = doc.splitTextToSize(ascii(body), maxW);
     doc.text(lines, M, y);
     y += lines.length * 14 + 14;
   };
@@ -108,7 +108,7 @@ export function downloadContractPdf(contract: PurchaseContract) {
     doc.text(mark, M, y);
     doc.setFont("courier", "normal");
     doc.setTextColor(INK);
-    const exprLines = doc.splitTextToSize(`${c.expression}  (${c.label})`, maxW - 52);
+    const exprLines = doc.splitTextToSize(ascii(`${c.expression}  (${c.label})`), maxW - 52);
     doc.text(exprLines, M + 48, y);
     y += exprLines.length * 13;
 
@@ -117,7 +117,7 @@ export function downloadContractPdf(contract: PurchaseContract) {
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9.5);
       doc.setTextColor(MUTED);
-      const nl = doc.splitTextToSize(note, maxW - 52);
+      const nl = doc.splitTextToSize(ascii(note), maxW - 52);
       doc.text(nl, M + 48, y + 4);
       y += nl.length * 12 + 4;
     }
@@ -125,7 +125,7 @@ export function downloadContractPdf(contract: PurchaseContract) {
       doc.setFont("helvetica", "italic");
       doc.setFontSize(9.5);
       doc.setTextColor(ACCENT);
-      const rl = doc.splitTextToSize(`Fix: ${c.remediation}`, maxW - 52);
+      const rl = doc.splitTextToSize(ascii(`Fix: ${c.remediation}`), maxW - 52);
       doc.text(rl, M + 48, y + 4);
       y += rl.length * 12 + 4;
     }
@@ -145,7 +145,7 @@ export function downloadContractPdf(contract: PurchaseContract) {
     doc.setTextColor(INK);
     contract.blockedReasons.forEach((r) => {
       pageBreak(30);
-      const l = doc.splitTextToSize(`• ${r}`, maxW);
+      const l = doc.splitTextToSize(ascii(`- ${r}`), maxW);
       doc.text(l, M, y);
       y += l.length * 13 + 2;
     });
