@@ -1,7 +1,7 @@
 export function GridBackdrop() {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-      <div className="absolute inset-0 bg-grid bg-grid-fade animate-grid opacity-70" />
+      
       <div
         className="absolute left-1/2 top-[-10%] h-[520px] w-[820px] -translate-x-1/2 rounded-full blur-3xl"
         style={{

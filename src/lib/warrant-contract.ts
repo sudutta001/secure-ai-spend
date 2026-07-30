@@ -10,6 +10,10 @@ export interface Condition {
   expression: string;
   status: ConditionStatus;
   detail?: string;
+  /** Why the clause failed, in plain language. */
+  reason?: string;
+  /** How to edit the request so this clause can pass. */
+  remediation?: string;
 }
 
 export interface PurchaseContract {
@@ -18,6 +22,9 @@ export interface PurchaseContract {
   conditions: Condition[];
   signed: boolean;
   blockedReasons: string[];
+  /** Set by the server verifier. */
+  verificationId?: string;
+  verifiedAt?: string;
 }
 
 // A pretend "candidate offer" the agent found. The demo checks the contract
@@ -149,6 +156,12 @@ export function buildContract(request: string, offer: CandidateOffer = DEFAULT_O
       detail: pass
         ? `Offer at ${fmt(offer.price, offer.currency)} is within budget.`
         : `Offer at ${fmt(offer.price, offer.currency)} exceeds the cap.`,
+      reason: pass
+        ? undefined
+        : `The candidate offer costs ${fmt(offer.price, offer.currency)}, which is above your cap of ${fmt(budget.amount, budget.currency)}.`,
+      remediation: pass
+        ? undefined
+        : `Raise the budget to at least ${fmt(offer.price, offer.currency)} — e.g. "under ${fmt(offer.price, offer.currency)}" — or keep the cap and let Warrant halt the buy.`,
     });
     if (!pass) blocked.push(`Offer exceeds the ${fmt(budget.amount, budget.currency)} budget cap.`);
   }
@@ -161,6 +174,8 @@ export function buildContract(request: string, offer: CandidateOffer = DEFAULT_O
       label: "Size",
       expression: `size = ${size}"`,
       status: pass ? "pass" : "fail",
+      reason: pass ? undefined : `The offer is ${offer.sizeInches}", not ${size}".`,
+      remediation: pass ? undefined : `Change the size in your request to ${offer.sizeInches}", or allow a range such as "24-27 inch".`,
     });
     if (!pass) blocked.push(`Offer size (${offer.sizeInches}") does not equal ${size}".`);
   }
@@ -173,6 +188,8 @@ export function buildContract(request: string, offer: CandidateOffer = DEFAULT_O
       label: "Condition",
       expression: `condition = ${cond}`,
       status: pass ? "pass" : "fail",
+      reason: pass ? undefined : `The offer is listed as "${offer.condition}" while you required "${cond}".`,
+      remediation: pass ? undefined : `Accept "${offer.condition}" units in your request, or keep "${cond}" and Warrant will keep searching.`,
     });
     if (!pass) blocked.push(`Offer condition is "${offer.condition}", not "${cond}".`);
   }
@@ -186,6 +203,8 @@ export function buildContract(request: string, offer: CandidateOffer = DEFAULT_O
       label: "Delivery",
       expression: `delivery ≤ ${label}`,
       status: pass ? "pass" : "fail",
+      reason: pass ? undefined : `Fastest delivery on the offer is ${offer.deliveryDays} day(s), slower than "${label}".`,
+      remediation: pass ? undefined : `Relax the deadline to "within ${offer.deliveryDays} days" if that still works for you.`,
     });
     if (!pass) blocked.push(`Offer delivery is ${offer.deliveryDays} day(s), exceeds ${label}.`);
   }
@@ -198,6 +217,8 @@ export function buildContract(request: string, offer: CandidateOffer = DEFAULT_O
       label: "Seller Rating",
       expression: `rating ≥ ${rating.toFixed(1)}`,
       status: pass ? "pass" : "fail",
+      reason: pass ? undefined : `Seller is rated ${offer.sellerRating}★, below your floor of ${rating}★.`,
+      remediation: pass ? undefined : `Lower the rating floor to ${offer.sellerRating}★ or below, or keep it and require a different seller.`,
     });
     if (!pass) blocked.push(`Seller rating ${offer.sellerRating} is below ${rating}.`);
   }
@@ -210,6 +231,8 @@ export function buildContract(request: string, offer: CandidateOffer = DEFAULT_O
       label: "Marketplace",
       expression: `marketplace ∈ {${mkts.join(", ")}}`,
       status: pass ? "pass" : "fail",
+      reason: pass ? undefined : `The offer is on ${offer.marketplace}, which is not in your allowed set {${mkts.join(", ")}}.`,
+      remediation: pass ? undefined : `Add "${offer.marketplace}" to the allowed marketplaces in your request.`,
     });
     if (!pass) blocked.push(`Offer marketplace "${offer.marketplace}" not in allowed set.`);
   }
@@ -222,6 +245,8 @@ export function buildContract(request: string, offer: CandidateOffer = DEFAULT_O
       label: "Return Window",
       expression: `return ≥ ${ret} days`,
       status: pass ? "pass" : "fail",
+      reason: pass ? undefined : `The offer only allows ${offer.returnWindowDays}-day returns, short of your ${ret}-day requirement.`,
+      remediation: pass ? undefined : `Ask for "${offer.returnWindowDays}-day returns" instead of ${ret}.`,
     });
     if (!pass) blocked.push(`Return window (${offer.returnWindowDays}d) shorter than ${ret}d.`);
   }
@@ -243,6 +268,9 @@ export function buildContract(request: string, offer: CandidateOffer = DEFAULT_O
       expression: "constraints.count ≥ 1",
       status: "unknown",
       detail: "No explicit constraints detected. Add at least one to sign.",
+      reason: "Warrant could not extract a single machine-checkable constraint from your request.",
+      remediation:
+        'Add at least one hard limit — for example a budget ("under ₹30,000"), a delivery deadline, or a seller rating floor.',
     });
     blocked.push("No constraints detected — Warrant will not authorize an unconstrained buy.");
   }
@@ -257,6 +285,7 @@ export function buildContract(request: string, offer: CandidateOffer = DEFAULT_O
     blockedReasons: blocked,
   };
 }
+
 
 export const DEMO_PROMPTS = [
   'Buy a new 27" monitor from Amazon under ₹30,000, delivered by tomorrow, seller rating 4.6+, 30-day returns.',
