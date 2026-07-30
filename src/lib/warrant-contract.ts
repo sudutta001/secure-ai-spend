@@ -10,6 +10,10 @@ export interface Condition {
   expression: string;
   status: ConditionStatus;
   detail?: string;
+  /** Why the clause failed, in plain language. */
+  reason?: string;
+  /** How to edit the request so this clause can pass. */
+  remediation?: string;
 }
 
 export interface PurchaseContract {
@@ -18,6 +22,9 @@ export interface PurchaseContract {
   conditions: Condition[];
   signed: boolean;
   blockedReasons: string[];
+  /** Set by the server verifier. */
+  verificationId?: string;
+  verifiedAt?: string;
 }
 
 // A pretend "candidate offer" the agent found. The demo checks the contract
