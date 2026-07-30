@@ -7,6 +7,26 @@ const ACCENT = "#2F5BE0";
 const RED = "#c0392b";
 const GREEN = "#1e874b";
 
+
+// Core PDF fonts lack these glyphs — swap to ASCII so nothing renders as garbage.
+function ascii(text: string): string {
+  return text
+    .replace(/≤/g, "<=")
+    .replace(/≥/g, ">=")
+    .replace(/∈/g, " in ")
+    .replace(/★/g, "*")
+    .replace(/₹/g, "Rs ")
+    .replace(/€/g, "EUR ")
+    .replace(/·/g, "-")
+    .replace(/—/g, "-")
+    .replace(/–/g, "-")
+    .replace(/[""]/g, '"')
+    .replace(/['']/g, "'")
+    .replace(/…/g, "...")
+    // eslint-disable-next-line no-control-regex
+    .replace(/[^\x00-\x7F]/g, "");
+}
+
 export function downloadContractPdf(contract: PurchaseContract) {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
