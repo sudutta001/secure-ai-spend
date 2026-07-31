@@ -1,4 +1,16 @@
+import { Link, useNavigate } from "@tanstack/react-router";
+import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@/hooks/use-session";
+
 export function Nav() {
+  const { user } = useSession();
+  const navigate = useNavigate();
+
+  async function signOut() {
+    await supabase.auth.signOut();
+    void navigate({ to: "/", replace: true });
+  }
+
   const links = [
     { href: "#how", label: "How it works" },
     { href: "#demo", label: "Demo" },
