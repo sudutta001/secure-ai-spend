@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { Link } from "@tanstack/react-router";
 import { Loader2, Sparkles, ArrowRight, Download, History, Trash2, Wrench, ShieldOff } from "lucide-react";
 import { DEMO_PROMPTS, type PurchaseContract } from "@/lib/warrant-contract";
 import { verifyPurchaseRequest } from "@/lib/contract.functions";
 import { downloadContractPdf } from "@/lib/contract-pdf";
 import { useContractHistory } from "@/lib/use-contract-history";
+import { useSession } from "@/hooks/use-session";
 import { ContractCard } from "./ContractCard";
 
 export function DemoFlow() {
@@ -13,7 +15,9 @@ export function DemoFlow() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const verify = useServerFn(verifyPurchaseRequest);
-  const { history, save, remove, clear } = useContractHistory();
+  const { user } = useSession();
+  const { history, save, remove, clear } = useContractHistory(Boolean(user));
+
 
   const run = useCallback(
     async (text: string) => {
