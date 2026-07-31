@@ -1,4 +1,16 @@
+import { Link, useNavigate } from "@tanstack/react-router";
+import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@/hooks/use-session";
+
 export function Nav() {
+  const { user } = useSession();
+  const navigate = useNavigate();
+
+  async function signOut() {
+    await supabase.auth.signOut();
+    void navigate({ to: "/", replace: true });
+  }
+
   const links = [
     { href: "#how", label: "How it works" },
     { href: "#demo", label: "Demo" },
@@ -21,12 +33,36 @@ export function Nav() {
             </a>
           ))}
         </nav>
-        <a
-          href="#demo"
-          className="rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-white/80 transition hover:border-white/25 hover:text-white"
-        >
-          Try demo
-        </a>
+        <div className="flex items-center gap-2">
+          <a
+            href="#demo"
+            className="rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-white/80 transition hover:border-white/25 hover:text-white"
+          >
+            Try demo
+          </a>
+          {user ? (
+            <>
+              <span className="hidden max-w-[160px] truncate text-xs text-white/45 sm:inline">
+                {user.email}
+              </span>
+              <button
+                type="button"
+                onClick={() => void signOut()}
+                className="rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-white/80 transition hover:border-white/25 hover:text-white"
+              >
+                Sign out
+              </button>
+            </>
+          ) : (
+            <Link
+              to="/auth"
+              className="rounded-full bg-[#4F7DFF] px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-[#6a92ff]"
+            >
+              Sign in
+            </Link>
+          )}
+        </div>
+
       </div>
     </header>
   );
